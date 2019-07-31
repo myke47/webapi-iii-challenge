@@ -3,7 +3,7 @@ const cors = require('cors');
 const posts = require('./data/helpers/postDb');
 const users = require('./data/helpers/userDb');
 const tags = require('./data/helpers/tagDb');
-const port = 5000;
+const port = 5500;
 
 const server = express();
 server.use(express.json());
@@ -14,13 +14,21 @@ const errorHelper = (status, message, res) => {
 };
 
 // TODO Custom MiddleWare //
-
-
-function logger(req, res, next) {
-
+const nameCheckMiddleware = (req, res, next) => {
+  const { name } = req.body;
+  if (!name) {
+    errorHelper(404, 'Name must be included', res);
+    next();
+  } else {
+    next();
+  }
 };
 
-// Endpoints
+// function logger(req, res, next) {
+
+// };
+
+// User Endpoints
 server.get('/api/users', (req, res) => {
   users
   .get()
@@ -28,10 +36,23 @@ server.get('/api/users', (req, res) => {
     res.json(foundUsers);
   })
   .catch(err => {
-    return errorHelper(500, 'Database not found', res);
+    return errorHelper(500, 'Database failure', res);
+  });
+});
+
+server.post('/api/users', nameCheckMiddleware, (req, res) => {
+  const { name } = req.body;
+  users
+  .insert({ name })
+  .then(response => {
+    res.json(response);
+  })
+  .catch(err => {
+    return errorHelper(500, 'Database failure', res);
   });
 });
 
 
 
 module.exports = server;
+server.listen(port, () => console.log(`Server listening on ${port}`));
